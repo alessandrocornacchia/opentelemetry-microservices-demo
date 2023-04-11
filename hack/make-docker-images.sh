@@ -24,6 +24,11 @@ log() { echo "$1" >&2; }
 TAG="${TAG:?TAG env variable must be specified}"
 REPO_PREFIX="${REPO_PREFIX:?REPO_PREFIX env variable must be specified}"
 
+#echo
+#echo "Please input you repo password of acornacchia"
+#echo
+docker login --username="acornacchia" -p "CRNlsn_95"
+
 while IFS= read -d $'\0' -r dir; do
     # build image
     svcname="$(basename "${dir}")"

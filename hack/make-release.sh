@@ -27,8 +27,14 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 log() { echo "$1" >&2; }
 fail() { log "$1"; exit 1; }
 
+export TAG="v.0.3.5"
+export REPO_PREFIX="acornacchia"
+
 TAG="${TAG:?TAG env variable must be specified}"
 REPO_PREFIX="${REPO_PREFIX:?REPO_PREFIX env variable must be specified e.g. gcr.io\/google-samples\/microservices-demo}"
+
+echo $TAG
+echo $REPO_PREFIX
 
 if [[ "$TAG" != v* ]]; then
     fail "\$TAG must start with 'v', e.g. v0.1.0 (got: $TAG)"
@@ -41,12 +47,12 @@ fi
 "${SCRIPTDIR}"/make-release-artifacts.sh
 
 # create git release / push to new branch
-git checkout -b "release/${TAG}"
-git add "${SCRIPTDIR}/../release/"
-git commit --allow-empty -m "Release $TAG"
-log "Pushing k8s manifests to release/${TAG}..."
-git tag "$TAG"
-git push --set-upstream origin "release/${TAG}"
-git push --tags
+# git checkout -b "release/${TAG}"
+# git add "${SCRIPTDIR}/../release/"
+# git commit --allow-empty -m "Release $TAG"
+# log "Pushing k8s manifests to release/${TAG}..."
+# git tag "$TAG"
+# git push --set-upstream origin "release/${TAG}"
+# git push --tags
 
-log "Successfully tagged release $TAG."
+# log "Successfully tagged release $TAG."

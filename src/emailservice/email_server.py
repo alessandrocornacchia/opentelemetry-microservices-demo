@@ -127,7 +127,7 @@ def start(dummy_mode):
 
   port = os.environ.get('PORT', "8080")
   logger.info("listening on port: "+port)
-  server.add_insecure_port('[::]:'+port)
+  server.add_insecure_port('0.0.0.0:'+port)
   server.start()
   try:
     while True:

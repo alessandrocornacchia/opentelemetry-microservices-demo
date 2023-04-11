@@ -23,6 +23,10 @@ SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 log() { echo "$1" >&2; }
 
+# added acornacchia
+export TAG="v.0.3.5"
+export REPO_PREFIX="acornacchia"
+
 TAG="${TAG:?TAG env variable must be specified}"
 REPO_PREFIX="${REPO_PREFIX:?REPO_PREFIX env variable must be specified}"
 OUT_DIR="${OUT_DIR:-${SCRIPTDIR}/../release}"
@@ -51,12 +55,16 @@ read_manifests() {
     dir="$1"
 
     while IFS= read -d $'\0' -r file; do
-        # strip license headers (pattern "^# ")
-        awk '
-        /^[^# ]/ { found = 1 }
-        found { print }' "${file}"
+        # do not deploy OTEL exporter in the cluster as we directly use Jaeger
+        svcname="$(basename "${file}")"
+        if [[ "$svcname" != jaeger* ]]; then   # "$svcname" != otelcollector* &&      
+            # strip license headers (pattern "^# ")
+            awk '
+            /^[^# ]/ { found = 1 }
+            found { print }' "${file}"
 
-        echo "---"
+            echo "---"
+        fi
     done < <(find "${dir}" -name '*.yaml' -type f -print0)
 }
 
@@ -67,11 +75,13 @@ mk_kubernetes_manifests() {
     for dir in ./src/*/
     do
         svcname="$(basename "${dir}")"
-        image="$REPO_PREFIX/$svcname:$TAG"
+        if [[ "$svcname" != otelcollector* ]]; then
+            image="$REPO_PREFIX/$svcname:$TAG"
 
-        pattern="^(\s*)image:\s.*$svcname(.*)(\s*)"
-        replace="\1image: $image\3"
-        out_manifest="$(gsed -r "s|$pattern|$replace|g" <(echo "${out_manifest}") )"
+            pattern="^(\s*)image:\s.*$svcname(.*)(\s*)"
+            replace="\1image: $image\3"
+            out_manifest="$(gsed -r "s|$pattern|$replace|g" <(echo "${out_manifest}") )"
+        fi
     done
 
     print_license_header

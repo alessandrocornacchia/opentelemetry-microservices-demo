@@ -25,7 +25,7 @@ spec:
       name: http
       protocol: HTTP
     hosts:
-    - "*"
+    - "hipstershop.172.18.0.28.nip.io"
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -33,7 +33,7 @@ metadata:
   name: frontend-ingress
 spec:
   hosts:
-  - "*"
+  - "hipstershop.172.18.0.28.nip.io"
   gateways:
   - frontend-gateway
   http:

@@ -88,7 +88,7 @@ if __name__ == "__main__":
 
     # start server
     logger.info("listening on port: " + port)
-    server.add_insecure_port('[::]:'+port)
+    server.add_insecure_port('0.0.0.0:'+port)
     server.start()
 
     # keep alive

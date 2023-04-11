@@ -6,4 +6,4 @@ EXPOSE 8889
 EXPOSE 13133
 EXPOSE 4317
 EXPOSE 55670
-CMD [ "--config=conf.yml" ]
+CMD [ "--config=/etc/otel/conf.yml" ]
