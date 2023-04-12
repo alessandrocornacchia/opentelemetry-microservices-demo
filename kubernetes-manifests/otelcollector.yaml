@@ -44,6 +44,13 @@ data:
       probabilistic_sampler:
         hash_seed: 1000
         sampling_percentage: 100
+      filter:
+        spans:
+          exclude:
+            match_type: strict
+            attributes:
+              - key: "rpc.service"
+                value: "grpc.health.v1.Health"
 
     exporters:
       otlphttp:
@@ -53,7 +60,7 @@ data:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [probabilistic_sampler]
+          processors: [probabilistic_sampler, filter]
           exporters: [otlphttp]
 ---
 apiVersion: v1

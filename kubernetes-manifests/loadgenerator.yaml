@@ -49,6 +49,9 @@ spec:
       containers:
       - name: main
         image: loadgenerator
+        volumeMounts:
+        - mountPath: /loadgen
+          name: locust-config-volume
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
@@ -61,3 +64,8 @@ spec:
           limits:
             cpu: 500m
             memory: 512Mi
+      volumes:
+      - configMap:
+          name: locust-config
+        name: locust-config-volume
+
