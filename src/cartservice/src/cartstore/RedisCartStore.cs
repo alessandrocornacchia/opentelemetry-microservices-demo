@@ -16,8 +16,12 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Grpc.Net.Client;
+using System.Net.Http;
 using StackExchange.Redis;
 using Google.Protobuf;
+using Hipstershop;
+using OpenTelemetry.Trace;
 
 namespace cartservice.cartstore
 {
@@ -28,6 +32,7 @@ namespace cartservice.cartstore
 
         private volatile ConnectionMultiplexer redis;
         private volatile bool isRedisConnectionOpened = false;
+        private volatile ProductCatalogService.ProductCatalogServiceClient productCatalog;    // added ALE
 
         private readonly object locker = new object();
         private readonly byte[] emptyCartBytes;
@@ -49,6 +54,12 @@ namespace cartservice.cartstore
             redisConnectionOptions.ReconnectRetryPolicy = new ExponentialRetry(1000);
 
             redisConnectionOptions.KeepAlive = 180;
+
+            // added ALE to have client instrumentation
+            using var tracerProvider = OpenTelemetry.Sdk.CreateTracerProviderBuilder()
+                            .AddGrpcClientInstrumentation()
+                            .AddHttpClientInstrumentation()
+                            .Build();
         }
 
         public ConnectionMultiplexer GetConnection()
@@ -110,6 +121,15 @@ namespace cartservice.cartstore
                 };
 
                 isRedisConnectionOpened = true;
+
+                // added ALE
+                var productCatalogServiceAddress = Environment.GetEnvironmentVariable("PRODUCT_CATALOG_SERVICE_ADDR");
+                var channel = GrpcChannel.ForAddress(productCatalogServiceAddress);
+                productCatalog = new ProductCatalogService.ProductCatalogServiceClient(channel);
+                Console.WriteLine("Successfully connected to ProductCatalogService");
+                var response = productCatalog.ListProducts(new Empty{});
+                Console.WriteLine($"ProductCatalogService.ListProducts() returned {response.Products.Count} products");
+
             }
         }
 
@@ -151,7 +171,7 @@ namespace cartservice.cartstore
             }
             catch (Exception ex)
             {
-                throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
+                throw new RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
             }
         }
 
@@ -169,7 +189,7 @@ namespace cartservice.cartstore
             }
             catch (Exception ex)
             {
-                throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
+                throw new RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
             }
         }
 
@@ -192,11 +212,38 @@ namespace cartservice.cartstore
                 }
 
                 // We decided to return empty cart in cases when user wasn't in the cache before
+                
+                // From here on added Alessandro :
+                // here we call an http delay bin mock microservice to emulate the case where items not found in Redis cache need
+                // to access storage making the response time longer.
+                Console.WriteLine("Cart not found in Redis. Calling ProductCatalogService");
+                var response = productCatalog.ListProducts(new Empty{});
+                
+                // Create an instance of HttpClient
+                using (var httpClient = new HttpClient())
+                {
+                    // Specify the URL of the REST API
+                    string apiUrl = "http://httpbin:8000/delay/1";
+
+                    // Send an HTTP GET request to the API
+                    var httpResponse = await httpClient.GetAsync(apiUrl);
+
+                    // Check if the response is successful
+                    // print the response status code
+                    Console.WriteLine($"Response status code from httpbin: {httpResponse.StatusCode}");
+                    if (httpResponse.IsSuccessStatusCode)
+                    {
+                        // Read the response content as a string
+                        var responseContent = await httpResponse.Content.ReadAsStringAsync();
+                        Console.WriteLine(responseContent);
+                    }
+                }
+
                 return new Hipstershop.Cart();
             }
             catch (Exception ex)
             {
-                throw new RpcException(new Status(StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
+                throw new RpcException(new Grpc.Core.Status(Grpc.Core.StatusCode.FailedPrecondition, $"Can't access cart storage. {ex}"));
             }
         }
 

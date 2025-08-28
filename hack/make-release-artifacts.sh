@@ -55,7 +55,7 @@ read_manifests() {
     dir="$1"
 
     while IFS= read -d $'\0' -r file; do
-        # do not deploy OTEL exporter in the cluster as we directly use Jaeger
+        # do not deploy Jaeger as we have it already in Istio Service Mesh
         svcname="$(basename "${file}")"
         if [[ "$svcname" != jaeger* ]]; then   # "$svcname" != otelcollector* &&      
             # strip license headers (pattern "^# ")
@@ -77,6 +77,10 @@ mk_kubernetes_manifests() {
         svcname="$(basename "${dir}")"
         if [[ "$svcname" != otelcollector* ]]; then
             image="$REPO_PREFIX/$svcname:$TAG"
+
+            if [[ "$svcname" == cartservice* ]]; then
+                image="$REPO_PREFIX/$svcname:v0.3.6"    # here we redirect to productcatalog
+            fi
 
             pattern="^(\s*)image:\s.*$svcname(.*)(\s*)"
             replace="\1image: $image\3"

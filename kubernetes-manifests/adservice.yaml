@@ -27,6 +27,16 @@ spec:
     spec:
       serviceAccountName: default
       terminationGracePeriodSeconds: 5
+      # set node affinity to run on node not in "mcnode18" because exec format error (?????)
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: "kubernetes.io/hostname"
+                operator: NotIn
+                values:
+                - mcnode18
       containers:
       - name: server
         image: adservice
@@ -41,11 +51,11 @@ spec:
           value: "service.name=adservice,service.version=1.0.0"
         resources:
           requests:
-            cpu: 400m
-            memory: 360Mi
+            cpu: 300m #400
+            memory: 250Mi #360Mi
           limits:
-            cpu: 600m
-            memory: 600Mi
+            cpu: 1000m  #600 but very thread intensive
+            memory: 660Mi
         readinessProbe:
           initialDelaySeconds: 60
           periodSeconds: 15

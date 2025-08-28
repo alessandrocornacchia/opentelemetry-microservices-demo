@@ -51,21 +51,23 @@ spec:
         image: loadgenerator
         volumeMounts:
         - mountPath: /loadgen
-          name: locust-config-volume
+          name: locust
         env:
         - name: FRONTEND_ADDR
           value: "frontend:80"
         - name: USERS
-          value: "10"
+          value: "20"
         resources:
-          requests:
+          limits:
             cpu: 300m
             memory: 256Mi
-          limits:
-            cpu: 500m
-            memory: 512Mi
+#          limits:
+#            cpu: 500m
+#            memory: 512Mi
+      # here we add either the base or the spike configmap
       volumes:
-      - configMap:
-          name: locust-config
-        name: locust-config-volume
+        - name: locust
+          configMap:
+            name: locust-config-{{ .Values.loadShape }}
+        
 

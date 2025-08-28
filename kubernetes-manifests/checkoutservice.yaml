@@ -22,6 +22,11 @@ spec:
       app: checkoutservice
   template:
     metadata:
+      annotations:
+        sidecar.istio.io/proxyCPU: "100m" # control istio proxy resource requests
+        sidecar.istio.io/proxyCPULimit: "2000m" # control istio proxy resource requests
+        sidecar.istio.io/proxyMemoryLimit: "1Gi" # control istio proxy resource requests
+        sidecar.istio.io/proxyMemory: "100Mi" # control istio proxy resource requests
       labels:
         app: checkoutservice
     spec:
@@ -58,10 +63,10 @@ spec:
             value: "service.name=checkoutservice,service.version=1.0.0"
           resources:
             requests:
-              cpu: 100m
+              cpu: 200m
               memory: 64Mi
             limits:
-              cpu: 200m
+              cpu: 1000m
               memory: 128Mi
 ---
 apiVersion: v1
